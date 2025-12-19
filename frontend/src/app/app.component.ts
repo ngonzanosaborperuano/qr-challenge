@@ -10,10 +10,21 @@ import { AuthService } from './services/auth.service';
   imports: [CommonModule, LoginComponent, MatrixProcessorComponent],
   template: `
     <div class="container">
-      <h1>🔢 QR Challenge - Matrix Processor</h1>
-      <p style="color: #666; margin-bottom: 30px;">
-        Procesa matrices: rotación 90°, factorización QR y estadísticas
-      </p>
+      <div class="header-section">
+        <div>
+          <h1>🔢 QR Challenge - Matrix Processor</h1>
+          <p style="color: #666; margin-bottom: 30px;">
+            Procesa matrices: rotación 90°, factorización QR y estadísticas
+          </p>
+        </div>
+        <button 
+          *ngIf="authService.isAuthenticated()" 
+          (click)="onLogout()" 
+          class="logout-btn"
+          title="Cerrar sesión">
+          Cerrar Sesión
+        </button>
+      </div>
 
       <app-login></app-login>
 
@@ -30,5 +41,14 @@ import { AuthService } from './services/auth.service';
 })
 export class AppComponent {
   constructor(public authService: AuthService) {}
+
+  /**
+   * Maneja el cierre de sesión del usuario
+   */
+  onLogout(): void {
+    this.authService.logout();
+    // Forzar actualización del componente de login
+    // El cambio en isAuthenticated() actualizará automáticamente la vista
+  }
 }
 

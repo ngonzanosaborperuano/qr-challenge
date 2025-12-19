@@ -18,6 +18,14 @@ export class AuthService {
     localStorage.removeItem(this.TOKEN_KEY);
   }
 
+  /**
+   * Cierra la sesión del usuario
+   * Elimina el token y limpia el almacenamiento local
+   */
+  logout(): void {
+    this.removeToken();
+  }
+
   isAuthenticated(): boolean {
     return this.getToken() !== null;
   }

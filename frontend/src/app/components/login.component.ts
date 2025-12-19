@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, DoCheck } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
@@ -46,7 +46,7 @@ import { AuthService } from '../services/auth.service';
   `,
   styles: []
 })
-export class LoginComponent {
+export class LoginComponent implements DoCheck {
   username = 'admin';
   password = 'admin';
   loading = false;
@@ -55,9 +55,33 @@ export class LoginComponent {
 
   constructor(
     private apiService: ApiService,
-    private authService: AuthService
+    public authService: AuthService
   ) {
+    this.updateLoginStatus();
+  }
+
+  /**
+   * Actualiza el estado de login basado en el token
+   */
+  private updateLoginStatus(): void {
     this.isLoggedIn = this.authService.isAuthenticated();
+  }
+
+  /**
+   * Se ejecuta cuando cambia el estado de autenticación
+   * Angular detecta cambios en authService.isAuthenticated()
+   */
+  ngDoCheck(): void {
+    const currentStatus = this.authService.isAuthenticated();
+    if (currentStatus !== this.isLoggedIn) {
+      this.isLoggedIn = currentStatus;
+      if (!this.isLoggedIn) {
+        // Limpiar campos si se cerró sesión
+        this.error = '';
+        this.username = 'admin';
+        this.password = 'admin';
+      }
+    }
   }
 
   onLogin(): void {

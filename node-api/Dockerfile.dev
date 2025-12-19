@@ -10,8 +10,9 @@ WORKDIR /app
 # Copiar archivos de dependencias
 COPY package*.json ./
 
-# Instalar todas las dependencias (incluyendo devDependencies para nodemon)
-RUN npm ci
+    # Instalar todas las dependencias (incluyendo devDependencies para nodemon)
+    # Usar npm install en desarrollo para regenerar package-lock.json si es necesario
+    RUN npm install
 
 # El código fuente se montará como volumen en docker-compose.dev.yml
 # No copiamos el código aquí para permitir hot-reload

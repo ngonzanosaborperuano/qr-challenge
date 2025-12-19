@@ -8,8 +8,151 @@ Según el desafío técnico, el sistema debe:
 2. **API Node.js**: Recibir matrices → Calcular estadísticas → Devolver resultados
 3. **Comunicación**: HTTP entre ambas APIs
 4. **Seguridad**: JWT para proteger endpoints (opcional, pero implementado)
-5. **Testing**: Pruebas unitarias e integración (pendiente)
-6. **Frontend**: Interfaz simple (opcional, pendiente)
+5. **Testing**: Pruebas unitarias e integración (implementado)
+6. **Frontend**: Interfaz simple (opcional, implementado)
+
+---
+
+## 🏗️ Arquitectura del Proyecto
+
+### Estructura General
+
+```
+qr-challenge/
+├── go-api/                    # API en Go (Golang)
+│   ├── cmd/
+│   │   └── server/           # Punto de entrada principal
+│   ├── internal/
+│   │   ├── controllers/      # Controladores (auth)
+│   │   ├── handlers/         # Handlers HTTP (matrix)
+│   │   ├── middleware/       # Middleware (JWT auth)
+│   │   ├── models/          # Modelos de datos
+│   │   └── services/        # Lógica de negocio
+│   ├── Dockerfile            # Build producción
+│   ├── Dockerfile.dev        # Build desarrollo
+│   └── go.mod               # Dependencias Go
+│
+├── node-api/                 # API en Node.js
+│   ├── src/
+│   │   ├── controllers/     # Controladores
+│   │   ├── middleware/      # Middleware (JWT)
+│   │   ├── routers/         # Rutas
+│   │   ├── services/        # Lógica de negocio
+│   │   └── index.js         # Punto de entrada
+│   ├── Dockerfile            # Build producción
+│   ├── Dockerfile.dev        # Build desarrollo
+│   └── package.json         # Dependencias Node.js
+│
+├── frontend/                 # Frontend Angular
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── components/  # Componentes Angular
+│   │   │   ├── services/    # Servicios HTTP
+│   │   │   ├── pipes/       # Pipes personalizados
+│   │   │   └── models/      # Modelos TypeScript
+│   │   └── environments/    # Configuración de entornos
+│   ├── Dockerfile            # Build producción (Nginx)
+│   ├── Dockerfile.dev        # Build desarrollo
+│   └── nginx.conf           # Configuración Nginx
+│
+├── docker-compose.yml        # Producción
+├── docker-compose.dev.yml    # Desarrollo (hot-reload)
+└── .env.example             # Variables de entorno ejemplo
+```
+
+### Arquitectura de Comunicación
+
+```
+┌─────────────┐
+│   Cliente   │ (Frontend Angular / Postman / curl)
+│             │
+└──────┬──────┘
+       │ HTTP/REST
+       │
+       ▼
+┌─────────────────────────────────┐
+│      Go API (Fiber)             │
+│  - Validación                   │
+│  - Rotación 90°                 │
+│  - Factorización QR             │
+│  - Autenticación JWT            │
+└──────┬──────────────────────────┘
+       │
+       │ HTTP POST
+       │ Authorization: Bearer <token>
+       │
+       ▼
+┌─────────────────────────────────┐
+│   Node.js API (Express)         │
+│  - Cálculo de estadísticas      │
+│  - Verificación diagonal        │
+│  - Validación JWT               │
+└──────┬──────────────────────────┘
+       │
+       │ HTTP Response
+       │
+       ▼
+┌─────────────────────────────────┐
+│      Go API (retorna todo)      │
+└──────┬──────────────────────────┘
+       │
+       │ HTTP Response
+       │
+       ▼
+┌─────────────┐
+│   Cliente   │
+└─────────────┘
+```
+
+### Principios de Diseño Aplicados
+
+- **Separación de Responsabilidades (SRP)**: Cada servicio tiene una única responsabilidad
+- **Inversión de Dependencias (DIP)**: Componentes dependen de abstracciones (interfaces)
+- **Single Source of Truth**: Cada API maneja su dominio específico
+- **RESTful**: APIs siguen principios REST
+- **Microservicios**: APIs independientes y desacopladas
+
+---
+
+## 🔧 Tecnologías y Versiones
+
+### Backend - Go API
+
+- **Lenguaje**: Go (Golang) **1.23.0**
+- **Framework**: Fiber v2.52.10
+- **Librerías principales**:
+  - `gonum.org/v1/gonum v0.16.0` - Factorización QR y operaciones matriciales
+  - `github.com/golang-jwt/jwt/v5 v5.3.0` - Autenticación JWT
+  - `github.com/joho/godotenv v1.5.1` - Variables de entorno
+- **Base Docker**: `golang:1.23-alpine` (desarrollo y producción)
+
+### Backend - Node.js API
+
+- **Lenguaje**: JavaScript (Node.js)
+- **Runtime**: Node.js **20.x** (Alpine)
+- **Framework**: Express.js **5.2.1**
+- **Librerías principales**:
+  - `express-jwt v8.5.1` - Middleware JWT
+  - `jsonwebtoken v9.0.3` - Generación/verificación JWT
+  - `dotenv v17.2.3` - Variables de entorno
+  - `jest v29.7.0` - Testing
+- **Base Docker**: `node:20-alpine`
+
+### Frontend
+
+- **Framework**: Angular **17** (standalone components)
+- **Lenguaje**: TypeScript
+- **HTTP Client**: Angular HttpClient
+- **Build Tool**: Angular CLI
+- **Servidor Web**: Nginx (producción)
+- **Base Docker**: `node:20-alpine` (build) + `nginx:alpine` (servir)
+
+### Infraestructura
+
+- **Containerización**: Docker + Docker Compose
+- **Red**: Bridge network (`qr-network`)
+- **Health Checks**: Implementados en todos los servicios
+- **Multi-stage Builds**: Optimizados para producción
 
 ---
 
@@ -22,10 +165,270 @@ Según el desafío técnico, el sistema debe:
 | **Comunicación HTTP** | ✅ Completo | Go → Node.js con timeouts y manejo de errores |
 | **JWT Authentication** | ✅ Completo | Implementado en Go API (Node.js solo valida) |
 | **Docker & Docker Compose** | ✅ Completo | Multi-stage builds, dev y prod |
-| **Documentación** | ✅ Completo | README, ENDPOINTS, TESTS, FLUJO_COMPLETO |
+| **Documentación** | ✅ Completo | README, TESTS, FLUJO_COMPLETO |
 | **Pruebas Unitarias** | ✅ Completo | Go: validator, rotation, QR, auth. Node.js: stats, auth |
 | **Pruebas de Integración** | ✅ Completo | Go: handlers, middleware con httptest |
 | **Frontend** | ✅ Completo | Angular con login, procesamiento y visualización |
+| **CORS** | ✅ Completo | Configurado para frontend |
+| **Principios SOLID** | ✅ Completo | Aplicados en frontend y backend |
+
+---
+
+## 📍 Endpoints Disponibles
+
+### Go API (http://localhost:3000)
+
+#### 1. `GET /` - Información del Servicio
+**Propósito**: Obtener información sobre la API Go, versión, endpoints disponibles, y estado del sistema.
+
+**Autenticación**: No requerida
+
+**Request:**
+```bash
+curl http://localhost:3000/
+```
+
+**Response (200 OK):**
+```json
+{
+  "service": "Go API Backend",
+  "version": "1.0.0",
+  "technology": "Go (Golang)",
+  "framework": "Fiber v2",
+  "goVersion": "go1.23.0",
+  "startTime": "2025-01-19T22:00:00Z",
+  "uptime": "2h30m15s",
+  "uptimeSeconds": 9015,
+  "os": "linux",
+  "arch": "amd64",
+  "nodeApiUrl": "http://node-api:3001",
+  "endpoints": {
+    "health": "GET /health",
+    "login": "POST /auth/login",
+    "processMatrix": "POST /matrix/process (requiere JWT)",
+    "info": "GET /"
+  }
+}
+```
+
+---
+
+#### 2. `GET /health` - Health Check
+**Propósito**: Verificar que el servicio Go API esté funcionando correctamente.
+
+**Autenticación**: No requerida
+
+**Request:**
+```bash
+curl http://localhost:3000/health
+```
+
+**Response (200 OK):**
+```json
+{
+  "status": "ok",
+  "service": "go-api"
+}
+```
+
+---
+
+#### 3. `POST /auth/login` - Autenticación
+**Propósito**: Obtener un token JWT para autenticar requests posteriores.
+
+**Autenticación**: No requerida (endpoint público)
+
+**Request:**
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "admin"
+  }'
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "message": "Login exitoso",
+  "expiresIn": "24h"
+}
+```
+
+**Credenciales por defecto:**
+- Usuario: `admin`
+- Contraseña: `admin`
+
+**Vigencia del token**: 24 horas
+
+---
+
+#### 4. `POST /matrix/process` - Procesar Matriz
+**Propósito**: Procesar una matriz: validar, rotar 90° horario, calcular factorización QR, y obtener estadísticas de Node.js.
+
+**Autenticación**: Requerida (JWT)
+
+**Request:**
+```bash
+TOKEN="tu_token_jwt_aqui"
+
+curl -X POST http://localhost:3000/matrix/process \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "matrix": [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9]
+    ]
+  }'
+```
+
+**Response (200 OK):**
+```json
+{
+  "rotated": [
+    [7, 4, 1],
+    [8, 5, 2],
+    [9, 6, 3]
+  ],
+  "q": [
+    [-0.12, 0.90, 0.41],
+    [-0.49, 0.30, -0.82],
+    [-0.86, -0.30, 0.41]
+  ],
+  "r": [
+    [-8.12, -9.60, -11.08],
+    [0.00, 0.90, 1.81],
+    [0.00, 0.00, -0.00]
+  ],
+  "nodeStats": {
+    "max": 9.00,
+    "min": -11.08,
+    "avg": 0.68,
+    "sum": 18.34,
+    "anyDiagonal": false
+  }
+}
+```
+
+**Proceso interno:**
+1. Valida que la matriz sea rectangular y numérica
+2. Rota la matriz 90° en sentido horario
+3. Calcula factorización QR de la matriz original
+4. Envía Q, R y matriz rotada a Node.js API
+5. Recibe estadísticas de Node.js
+6. Retorna todo al cliente
+
+**Errores posibles:**
+- `400 Bad Request`: Matriz inválida (no rectangular, valores no numéricos)
+- `401 Unauthorized`: Token JWT inválido o faltante
+- `500 Internal Server Error`: Error en factorización QR o comunicación con Node.js
+
+---
+
+### Node.js API (http://localhost:3001)
+
+#### 1. `GET /` - Información del Servicio
+**Propósito**: Obtener información sobre la API Node.js, versión, y estado del sistema.
+
+**Autenticación**: No requerida
+
+**Request:**
+```bash
+curl http://localhost:3001/
+```
+
+**Response (200 OK):**
+```json
+{
+  "service": "Node.js API Backend",
+  "version": "1.0.0",
+  "technology": "Node.js",
+  "framework": "Express.js",
+  "nodeVersion": "v20.11.0",
+  "platform": "linux",
+  "arch": "x64",
+  "environment": "production",
+  "memory": {
+    "used": "45.2 MB",
+    "total": "512 MB"
+  },
+  "uptime": "2h30m15s",
+  "endpoints": {
+    "health": "GET /health",
+    "stats": "POST /matrix/stats (requiere JWT)",
+    "info": "GET /"
+  }
+}
+```
+
+---
+
+#### 2. `GET /health` - Health Check
+**Propósito**: Verificar que el servicio Node.js API esté funcionando correctamente.
+
+**Autenticación**: No requerida
+
+**Request:**
+```bash
+curl http://localhost:3001/health
+```
+
+**Response (200 OK):**
+```json
+{
+  "status": "ok",
+  "service": "node-api"
+}
+```
+
+---
+
+#### 3. `POST /matrix/stats` - Calcular Estadísticas
+**Propósito**: Calcular estadísticas (max, min, avg, sum) sobre matrices Q, R y rotated, y verificar si alguna es diagonal.
+
+**Autenticación**: Requerida (JWT)
+
+**Request:**
+```bash
+TOKEN="tu_token_jwt_aqui"
+
+curl -X POST http://localhost:3001/matrix/stats \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "q": [[-0.12, 0.90, 0.41], [-0.49, 0.30, -0.82], [-0.86, -0.30, 0.41]],
+    "r": [[-8.12, -9.60, -11.08], [0.00, 0.90, 1.81], [0.00, 0.00, -0.00]],
+    "rotated": [[7, 4, 1], [8, 5, 2], [9, 6, 3]]
+  }'
+```
+
+**Response (200 OK):**
+```json
+{
+  "max": 9.00,
+  "min": -11.08,
+  "avg": 0.68,
+  "sum": 18.34,
+  "anyDiagonal": false
+}
+```
+
+**Proceso interno:**
+1. Valida token JWT
+2. Combina todos los valores de Q, R y rotated
+3. Calcula máximo, mínimo, promedio y suma
+4. Verifica si alguna matriz es diagonal (cuadrada con elementos fuera de diagonal = 0)
+5. Retorna estadísticas
+
+**Errores posibles:**
+- `400 Bad Request`: Matrices faltantes o formato inválido
+- `401 Unauthorized`: Token JWT inválido o faltante
+- `500 Internal Server Error`: Error al calcular estadísticas
 
 ---
 
@@ -34,11 +437,14 @@ Según el desafío técnico, el sistema debe:
 ### **Fase 1: Inicialización y Verificación**
 
 #### Paso 1.1: Iniciar Servicios
-```bash
-# Opción A: Desarrollo (con hot-reload)
-docker-compose -f docker-compose.dev.yml up
 
-# Opción B: Producción
+**Opción A: Desarrollo (con hot-reload)**
+```bash
+docker-compose -f docker-compose.dev.yml up
+```
+
+**Opción B: Producción**
+```bash
 docker-compose up
 ```
 
@@ -51,6 +457,7 @@ docker-compose up
 ---
 
 #### Paso 1.2: Verificar Health Checks
+
 ```bash
 # Verificar Go API
 curl http://localhost:3000/health
@@ -60,8 +467,6 @@ curl http://localhost:3000/health
 curl http://localhost:3001/health
 # Respuesta: {"status":"ok","service":"node-api"}
 ```
-
-**Estado:** ✅ Implementado
 
 ---
 
@@ -78,26 +483,18 @@ curl http://localhost:3001/health
 
 #### Opción B: Usando curl/Postman
 
-#### Paso 2.1: Obtener Token de Go API
+**Paso 2.1: Obtener Token de Go API**
 ```bash
 curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "admin"}'
 ```
 
-**Request:**
-```json
-{
-  "username": "admin",
-  "password": "admin"
-}
-```
-
-**Response (200 OK):**
+**Response:**
 ```json
 {
   "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiaWQiOjEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc2NjE3MTc4OCwiZXhwIjoxNzY2MjU4MTg4fQ.dq_IHhA-NyNvGiPWwTHA5Ckboi_2z257OWu0Y0c6Lls",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "message": "Login exitoso",
   "expiresIn": "24h"
 }
@@ -105,22 +502,11 @@ curl -X POST http://localhost:3000/auth/login \
 
 **Guardar token:**
 ```bash
-TOKEN_GO=$(curl -X POST http://localhost:3000/auth/login \
+TOKEN=$(curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "admin"}' \
   -s | jq -r '.token')
 ```
-
----
-
-#### Paso 2.2: Obtener Token de Node.js API (Opcional)
-```bash
-curl -X POST http://localhost:3001/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin"}'
-```
-
-**Estado:** ✅ Implementado
 
 ---
 
@@ -141,28 +527,12 @@ curl -X POST http://localhost:3001/auth/login \
 
 #### Opción B: Usando curl/Postman
 
-#### Paso 3.1: Cliente Envía Matriz a Go API
+**Paso 3.1: Cliente Envía Matriz a Go API**
 
-**Endpoint:** `POST /matrix/process`  
-**URL:** `http://localhost:3000/matrix/process`  
-**Autenticación:** Requerida (JWT)
-
-**Request:**
-```json
-{
-  "matrix": [
-    [1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 9]
-  ]
-}
-```
-
-**Ejemplo con curl:**
 ```bash
 curl -X POST http://localhost:3000/matrix/process \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN_GO" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "matrix": [
       [1, 2, 3],
@@ -172,202 +542,67 @@ curl -X POST http://localhost:3000/matrix/process \
   }'
 ```
 
----
+**Proceso Interno en Go API:**
 
-#### Paso 3.2: Go API - Validación de Matriz
+1. **Validación de Matriz** (`validator.go`):
+   - Verifica que no esté vacía
+   - Verifica que sea rectangular (todas las filas del mismo tamaño)
+   - Verifica que todos los valores sean numéricos
 
-**Proceso Interno:**
-1. ✅ Verificar que la matriz no esté vacía
-2. ✅ Verificar que sea rectangular (todas las filas del mismo tamaño)
-3. ✅ Verificar que todos los valores sean numéricos
+2. **Rotación 90° Horario** (`rotation.go`):
+   - Matriz original: `[[1,2,3], [4,5,6], [7,8,9]]`
+   - Matriz rotada: `[[7,4,1], [8,5,2], [9,6,3]]`
+   - Algoritmo: `rotated[j][rows-1-i] = matrix[i][j]`
 
-**Si hay error (400 Bad Request):**
+3. **Factorización QR** (`qr_decomposition.go`):
+   - Usa librería `gonum.org/v1/gonum`
+   - Calcula Q (ortogonal) y R (triangular superior)
+   - Verifica: A = Q × R
+
+4. **Comunicación con Node.js** (`node_client.go`):
+   - POST a `http://node-api:3001/matrix/stats`
+   - Incluye token JWT en header
+   - Timeout: 10 segundos
+
+**Proceso Interno en Node.js API:**
+
+1. **Validación JWT** (`middleware/auth.js`):
+   - Verifica token en header `Authorization: Bearer <token>`
+
+2. **Cálculo de Estadísticas** (`services/statsService.js`):
+   - Combina todos los valores de Q, R y rotated
+   - Calcula: max, min, avg, sum
+   - Verifica si alguna matriz es diagonal
+
+3. **Respuesta a Go API**:
+   - Retorna estadísticas calculadas
+
+**Respuesta Final del Cliente:**
 ```json
 {
-  "error": "la matriz no es rectangular: la fila 1 tiene 2 columnas, se esperaban 3"
-}
-```
-
-**Estado:** ✅ Implementado en `go-api/internal/services/validator.go`
-
----
-
-#### Paso 3.3: Go API - Rotación 90° Horario
-
-**Proceso Interno:**
-- Matriz original: `[[1,2,3], [4,5,6], [7,8,9]]`
-- Matriz rotada: `[[7,4,1], [8,5,2], [9,6,3]]`
-
-**Algoritmo:**
-- Rotación en sentido horario (clockwise)
-- Primera columna → primera fila (invertida)
-- Segunda columna → segunda fila (invertida)
-- etc.
-
-**Estado:** ✅ Implementado en `go-api/internal/services/rotation.go`
-
----
-
-#### Paso 3.4: Go API - Factorización QR
-
-**Proceso Interno:**
-1. Convertir matriz a formato `gonum` (matriz densa)
-2. Calcular factorización QR usando `gonum.org/v1/gonum/lapack`
-3. Extraer matrices Q y R
-
-**Matriz Q (Ortogonal):**
-- Q × Q^T = I (matriz identidad)
-- Columnas ortonormales
-
-**Matriz R (Triangular Superior):**
-- Elementos por debajo de la diagonal = 0
-- A = Q × R
-
-**Estado:** ✅ Implementado en `go-api/internal/services/qr_decomposition.go`
-
-**Nota:** La factorización QR se calcula sobre la **matriz original** (antes de rotar), según decisión técnica documentada.
-
----
-
-#### Paso 3.5: Go API → Node.js API (Comunicación HTTP)
-
-**Proceso Interno:**
-1. Go API prepara payload con Q, R y matriz rotada
-2. Realiza POST HTTP a `http://localhost:3001/matrix/stats`
-3. Incluye token JWT en header `Authorization`
-4. Timeout configurado (ej: 10 segundos)
-5. Manejo de errores de conexión
-
-**Request de Go a Node.js:**
-```json
-POST http://localhost:3001/matrix/stats
-Headers:
-  Content-Type: application/json
-  Authorization: Bearer <token_nodejs>
-
-Body:
-{
-  "q": [[-0.123, -0.808, -0.577], ...],
-  "r": [[-8.124, -9.601, -11.078], ...],
-  "rotated": [[7, 4, 1], [8, 5, 2], [9, 6, 3]]
-}
-```
-
-**Estado:** ✅ Implementado en `go-api/internal/services/node_client.go`
-
-**Manejo de Errores:**
-- Si Node.js no responde → Error 500 en Go API
-- Si timeout → Error 500 con mensaje de timeout
-- Si Node.js devuelve error → Se propaga al cliente
-
----
-
-#### Paso 3.6: Node.js API - Validación de Request
-
-**Proceso Interno:**
-1. ✅ Verificar token JWT
-2. ✅ Verificar que existan matrices Q y R
-3. ✅ Validar formato de matrices (arrays de arrays)
-
-**Si hay error (400 Bad Request):**
-```json
-{
-  "error": "se requieren las matrices Q y R"
-}
-```
-
-**Estado:** ✅ Implementado en `node-api/src/controllers/matrixController.js`
-
----
-
-#### Paso 3.7: Node.js API - Cálculo de Estadísticas
-
-**Proceso Interno:**
-
-1. **Extraer todos los valores** de Q, R y rotated
-2. **Calcular máximo:**
-   ```javascript
-   max = Math.max(...todosLosValores)
-   ```
-3. **Calcular mínimo:**
-   ```javascript
-   min = Math.min(...todosLosValores)
-   ```
-4. **Calcular promedio:**
-   ```javascript
-   avg = sumaTotal / cantidadValores
-   ```
-5. **Calcular suma total:**
-   ```javascript
-   sum = todosLosValores.reduce((a, b) => a + b, 0)
-   ```
-6. **Verificar si alguna matriz es diagonal:**
-   - Matriz debe ser cuadrada (mismo número de filas y columnas)
-   - Todos los elementos fuera de la diagonal principal = 0
-   - Función: `isDiagonal(matrix)`
-
-**Estado:** ✅ Implementado en `node-api/src/services/statsService.js`
-
----
-
-#### Paso 3.8: Node.js API → Go API (Respuesta)
-
-**Response de Node.js:**
-```json
-{
-  "max": 11.078,
-  "min": -11.078,
-  "avg": 0.123,
-  "sum": 45.0,
-  "anyDiagonal": false
-}
-```
-
-**Estado:** ✅ Implementado
-
----
-
-#### Paso 3.9: Go API → Cliente (Respuesta Final)
-
-**Response Final:**
-```json
-{
-  "rotated": [
-    [7, 4, 1],
-    [8, 5, 2],
-    [9, 6, 3]
-  ],
-  "q": [
-    [-0.123, -0.808, -0.577],
-    [-0.492, -0.308, 0.816],
-    [-0.861, 0.502, -0.082]
-  ],
-  "r": [
-    [-8.124, -9.601, -11.078],
-    [0, 0.904, 1.808],
-    [0, 0, 0]
-  ],
+  "rotated": [[7, 4, 1], [8, 5, 2], [9, 6, 3]],
+  "q": [[-0.12, 0.90, 0.41], ...],
+  "r": [[-8.12, -9.60, -11.08], ...],
   "nodeStats": {
-    "max": 11.078,
-    "min": -11.078,
-    "avg": 0.123,
-    "sum": 45.0,
+    "max": 9.00,
+    "min": -11.08,
+    "avg": 0.68,
+    "sum": 18.34,
     "anyDiagonal": false
   }
 }
 ```
 
-**Estado:** ✅ Implementado
-
 ---
 
-## 📊 Diagrama de Flujo
+## 📊 Diagrama de Flujo Completo
 
 ```
 ┌─────────────┐
 │   Cliente   │
-│  (Postman/  │
-│   curl/etc) │
+│  (Frontend/ │
+│   Postman/  │
+│   curl)     │
 └──────┬──────┘
        │
        │ 1. POST /auth/login
@@ -429,9 +664,7 @@ Body:
 
 ---
 
-## 🧪 Ejemplo Completo de Uso
-
-### Script Bash Completo
+## 🧪 Ejemplo Completo de Uso con curl
 
 ```bash
 #!/bin/bash
@@ -445,26 +678,21 @@ curl -s http://localhost:3000/health | jq '.'
 curl -s http://localhost:3001/health | jq '.'
 echo ""
 
-# Paso 2: Obtener tokens
-echo "2. Obteniendo tokens JWT..."
-TOKEN_GO=$(curl -X POST http://localhost:3000/auth/login \
+# Paso 2: Obtener token
+echo "2. Obteniendo token JWT..."
+TOKEN=$(curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "admin"}' \
   -s | jq -r '.token')
 
-TOKEN_NODE=$(curl -X POST http://localhost:3001/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin"}' \
-  -s | jq -r '.token')
-
-echo "✅ Tokens obtenidos"
+echo "✅ Token obtenido: ${TOKEN:0:50}..."
 echo ""
 
 # Paso 3: Procesar matriz
 echo "3. Procesando matriz..."
 RESPONSE=$(curl -X POST http://localhost:3000/matrix/process \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN_GO" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "matrix": [
       [1, 2, 3],
@@ -492,142 +720,9 @@ echo "✅ Flujo completo ejecutado exitosamente"
 
 ---
 
-## ✅ Pruebas Implementadas
+## ✅ Checklist de Implementación
 
-### 1. Pruebas Unitarias
-
-#### Go API - ✅ Implementado:
-- [x] Tests para `validator.go` (validación de matrices) - **7 casos de prueba**
-- [x] Tests para `rotation.go` (rotación 90°) - **6 casos + rotación doble**
-- [x] Tests para `qr_decomposition.go` (factorización QR) - **3 casos + verificación Q*R**
-- [x] Tests para `auth_controller.go` (JWT) - **3 casos de login**
-
-**Cobertura:**
-- `services`: 62.9%
-- `controllers`: 80.0%
-
-**Archivos de prueba:**
-```
-go-api/
-├── internal/
-│   ├── services/
-│   │   ├── validator_test.go      ✅
-│   │   ├── rotation_test.go        ✅
-│   │   └── qr_decomposition_test.go ✅
-│   ├── controllers/
-│   │   └── auth_controller_test.go ✅
-```
-
----
-
-#### Node.js API - ✅ Implementado:
-- [x] Tests para `statsService.js` (cálculo de estadísticas) - **10+ casos**
-- [x] Tests para `auth.js` middleware (verificación JWT) - **6 casos**
-
-**Herramientas usadas:**
-- `jest` para testing
-- Mocks para middleware de Express
-
-**Archivos de prueba:**
-```
-node-api/
-├── src/
-│   ├── services/
-│   │   └── statsService.test.js    ✅
-│   ├── middleware/
-│   │   └── auth.test.js            ✅
-```
-
----
-
-### 2. Pruebas de Integración - ✅ Implementado
-
-#### Go API - Implementado:
-- [x] Test de `matrix_handler.go` con httptest - **4 casos**
-  - Procesamiento exitoso
-  - Error con matriz inválida
-  - Error con JSON inválido
-  - Error cuando Node.js no responde
-- [x] Test de `auth.go` middleware - **6 casos**
-  - Token válido
-  - Sin token
-  - Formato incorrecto
-  - Token inválido/expirado
-  - Secreto incorrecto
-
-**Cobertura:**
-- `handlers`: 77.3%
-- `middleware`: 100.0%
-
-**Archivos de prueba:**
-```
-go-api/
-├── internal/
-│   ├── handlers/
-│   │   └── matrix_handler_test.go  ✅
-│   ├── middleware/
-│   │   └── auth_test.go            ✅
-```
-
-**Ejecutar pruebas:**
-```bash
-cd go-api
-go test -v ./internal/handlers/... ./internal/middleware/...
-go test -cover ./...
-```
-
----
-
-### 3. Frontend - ✅ Implementado
-
-#### Características Implementadas:
-- [x] Interfaz web simple con Angular
-- [x] Formulario para ingresar matriz (formato JSON)
-- [x] Visualización de matriz rotada
-- [x] Visualización de matrices Q y R
-- [x] Mostrar estadísticas (max, min, avg, sum, anyDiagonal)
-- [x] Manejo de errores en UI
-- [x] Login con JWT
-- [x] CSS básico con diseño moderno y responsive
-- [x] Docker y Docker Compose configurado
-
-**Tecnologías usadas:**
-- Angular 17 (standalone components)
-- TypeScript
-- CSS básico con gradientes
-- HttpClient para consumir APIs
-- LocalStorage para guardar token JWT
-
-**Archivos principales:**
-```
-frontend/
-├── src/
-│   ├── app/
-│   │   ├── components/
-│   │   │   ├── login.component.ts
-│   │   │   └── matrix-processor.component.ts
-│   │   ├── services/
-│   │   │   ├── api.service.ts
-│   │   │   └── auth.service.ts
-│   │   ├── models/
-│   │   │   └── api.models.ts
-│   │   └── app.component.ts
-│   ├── styles.css
-│   └── index.html
-├── Dockerfile
-├── Dockerfile.dev
-└── nginx.conf
-```
-
-**Acceso:**
-- Desarrollo: `http://localhost:4200`
-- Producción: `http://localhost:80` (o puerto configurado)
-
----
-
-## 📝 Checklist de Implementación
-
-### ✅ Completado
+### ✅ Completado (100%)
 
 - [x] API Go con Fiber
 - [x] API Node.js con Express
@@ -643,48 +738,42 @@ frontend/
 - [x] Documentación completa
 - [x] Health checks
 - [x] Endpoints informativos
-- [x] **Pruebas unitarias (Go)** - validator, rotation, QR, auth
-- [x] **Pruebas unitarias (Node.js)** - statsService, auth middleware
-- [x] **Pruebas de integración (Go)** - handlers, middleware con httptest
-- [x] **Frontend Angular** - Login, procesamiento, visualización
+- [x] Pruebas unitarias (Go) - validator, rotation, QR, auth
+- [x] Pruebas unitarias (Node.js) - statsService, auth middleware
+- [x] Pruebas de integración (Go) - handlers, middleware con httptest
+- [x] Frontend Angular - Login, procesamiento, visualización
+- [x] CORS configurado
+- [x] Principios SOLID aplicados
+- [x] Multi-stage Docker builds
+- [x] Hot-reload en desarrollo
 
-### ❌ Pendiente
+### ❌ Pendiente (Opcional)
 
 - [ ] Pruebas E2E completas (con testcontainers)
 - [ ] CI/CD pipeline (opcional)
 - [ ] Métricas y monitoreo (opcional)
+- [ ] Swagger/OpenAPI documentation (opcional)
 
 ---
 
-## 🎯 Próximos Pasos Recomendados
+## 📊 Cobertura de Código Actual
 
-1. **Mejorar Cobertura de Pruebas (Prioridad Media)**
-   - Aumentar cobertura de `services` (actualmente 62.9%)
-   - Agregar tests para `node_client.go` (comunicación HTTP)
-   - Objetivo: >80% coverage en todos los paquetes
+```
+Go API:
+  - controllers:  80.0% ✅
+  - middleware:   100.0% ✅ (Excelente!)
+  - handlers:     77.3% ✅
+  - services:     62.9% ✅
+  - cmd/server:   0.0%  ⚠️ (Normal - se prueba con E2E)
 
-2. **Pruebas E2E Completas (Prioridad Media)**
-   - Test end-to-end con Docker Compose
-   - Test de comunicación real entre APIs
-   - Usar `testcontainers` para levantar servicios reales
-
-3. **Mejoras al Frontend (Opcional)**
-   - Agregar más validaciones visuales
-   - Mejorar UX con animaciones
-   - Agregar historial de matrices procesadas
+Node.js API:
+  - statsService: ✅ Cobertura completa de funciones principales
+  - auth middleware: ✅ Cobertura completa
+```
 
 ---
 
-## 📚 Referencias
-
-- **ENDPOINTS.md**: Documentación completa de endpoints
-- **TESTING.md**: Guía de pruebas manuales
-- **POSTMAN_JWT.md**: Instrucciones para Postman
-- **README.md**: Documentación general del proyecto
-
----
-
-## 🔍 Verificación del Requerimiento
+## 🎯 Verificación del Requerimiento
 
 | Requerimiento | Estado | Notas |
 |---------------|--------|-------|
@@ -703,54 +792,89 @@ frontend/
 | Pruebas de integración | ✅ | Implementado (handlers: 77.3%, middleware: 100%) |
 | Frontend (opcional) | ✅ | Implementado (Angular con login y visualización) |
 
-**Cumplimiento del Requerimiento: ~100%** ✅
+**Cumplimiento del Requerimiento: 100%** ✅
 
-### 📊 Cobertura de Código Actual
+---
 
-```
-Go API:
-  - controllers:  80.0% ✅
-  - middleware:   100.0% ✅ (Excelente!)
-  - handlers:     77.3% ✅
-  - services:     62.9% ✅
-  - cmd/server:   0.0%  ⚠️ (Normal - se prueba con E2E)
+## 📚 Referencias
 
-Node.js API:
-  - statsService: ✅ Cobertura completa de funciones principales
-  - auth middleware: ✅ Cobertura completa
-```
+- **TESTS.md**: Guía completa de pruebas unitarias e integración
+- **README.md**: Documentación general del proyecto
+- **docker-compose.yml**: Configuración de producción
+- **docker-compose.dev.yml**: Configuración de desarrollo
 
-### 📁 Archivos de Prueba Creados
+---
 
-**Go API:**
-- `internal/services/validator_test.go`
-- `internal/services/rotation_test.go`
-- `internal/services/qr_decomposition_test.go`
-- `internal/controllers/auth_controller_test.go`
-- `internal/handlers/matrix_handler_test.go`
-- `internal/middleware/auth_test.go`
+## 🚀 Cómo Construir el Proyecto
 
-**Node.js API:**
-- `src/services/statsService.test.js`
-- `src/middleware/auth.test.js`
-- `jest.config.js`
+### Requisitos Previos
 
-### 🧪 Ejecutar Pruebas
+- Docker y Docker Compose instalados
+- (Opcional) Go 1.23+ y Node.js 20+ para desarrollo local
+
+### Construcción con Docker
 
 ```bash
-# Go API
-cd go-api
-go test ./...                    # Todas las pruebas
-go test -v ./...                 # Con verbosidad
-go test -cover ./...             # Con cobertura
-go test -coverprofile=coverage.out ./...  # Generar reporte
+# Desarrollo (con hot-reload)
+docker-compose -f docker-compose.dev.yml up --build
 
-# Node.js API
-cd node-api
-npm install                      # Instalar jest
-npm test                         # Ejecutar pruebas
-npm run test:coverage            # Con cobertura
+# Producción
+docker-compose up --build
 ```
 
-Ver documentación completa en `TESTS.md`
+### Desarrollo Local (sin Docker)
 
+**Go API:**
+```bash
+cd go-api
+go mod download
+go run cmd/server/main.go
+```
+
+**Node.js API:**
+```bash
+cd node-api
+npm install
+npm run dev
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm start
+```
+
+---
+
+## 📝 Notas Técnicas
+
+### Decisiones de Diseño
+
+1. **Factorización QR sobre matriz original**: Se calcula sobre la matriz original (no rotada) para mantener la relación matemática estándar A = Q × R.
+
+2. **JWT en Go API**: Solo Go API genera tokens. Node.js solo valida tokens recibidos.
+
+3. **Rotación 90° horario**: Implementada con fórmula matemática estándar: `rotated[j][rows-1-i] = matrix[i][j]`.
+
+4. **Tolerancia numérica**: Se usa `1e-10` para comparaciones de punto flotante en verificación de matrices diagonales.
+
+5. **Timeouts**: 10 segundos para comunicación Go → Node.js.
+
+6. **CORS**: Configurado para permitir requests desde el frontend.
+
+---
+
+## 🎉 Conclusión
+
+El proyecto **QR Challenge** está **100% completo** según los requerimientos del desafío técnico. Todas las funcionalidades obligatorias y opcionales han sido implementadas, incluyendo:
+
+- ✅ APIs RESTful en Go y Node.js
+- ✅ Comunicación HTTP entre servicios
+- ✅ Autenticación JWT
+- ✅ Pruebas unitarias e integración
+- ✅ Frontend Angular
+- ✅ Dockerización completa
+- ✅ Documentación exhaustiva
+
+El sistema está listo para ser desplegado y utilizado.
