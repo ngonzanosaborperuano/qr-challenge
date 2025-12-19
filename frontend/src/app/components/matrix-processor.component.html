@@ -1,0 +1,100 @@
+<div *ngIf="!authService.isAuthenticated()" class="error">
+  ⚠️ Debes iniciar sesión primero para procesar matrices.
+</div>
+
+<div *ngIf="authService.isAuthenticated()">
+  <h2>Procesar Matriz</h2>
+  
+  <div class="form-group">
+    <label for="matrixInput">Ingresa la matriz (formato JSON):</label>
+    <textarea
+      id="matrixInput"
+      [(ngModel)]="matrixInput"
+      name="matrixInput"
+      rows="6"
+      placeholder='[[1, 2, 3], [4, 5, 6], [7, 8, 9]]'
+    ></textarea>
+    <small>
+      Ejemplo: [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    </small>
+  </div>
+
+  <button (click)="processMatrix()" [disabled]="loading || !matrixInput.trim()">
+    {{ loading ? 'Procesando...' : 'Procesar Matriz' }}
+  </button>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="loading" class="loading">Procesando matriz...</div>
+
+  <div *ngIf="result && !error" class="results-section">
+    <div class="section-divider"></div>
+
+    <h3>Matriz Rotada (90° horario)</h3>
+    <div class="matrix-display">
+      <pre>{{ result.rotated | matrixFormat }}</pre>
+    </div>
+
+    <h3>Matriz Q (Factorización QR)</h3>
+    <app-info-box type="info">
+      <strong>¿Qué es la Factorización QR?</strong><br>
+      La factorización QR descompone una matriz A en dos matrices: <strong>Q</strong> (ortogonal) y <strong>R</strong> (triangular superior), 
+      donde <strong>A = Q × R</strong>. La matriz Q contiene vectores ortonormales y R es triangular superior. 
+      Esta descomposición es útil en álgebra lineal, resolución de sistemas de ecuaciones y análisis numérico.
+    </app-info-box>
+    <div class="matrix-display">
+      <pre>{{ result.q | matrixFormat }}</pre>
+    </div>
+
+    <h3>Matriz R (Factorización QR)</h3>
+    <app-info-box type="info">
+      La matriz <strong>R</strong> es triangular superior (todos los elementos debajo de la diagonal principal son 0 o muy cercanos a 0).
+    </app-info-box>
+    <div class="matrix-display">
+      <pre>{{ result.r | matrixFormat }}</pre>
+    </div>
+
+    <div *ngIf="result.nodeStats" class="section-divider"></div>
+    <h3 *ngIf="result.nodeStats">Estadísticas</h3>
+    <app-info-box type="warning">
+      <strong>📊 Nota sobre las estadísticas:</strong><br>
+      Las estadísticas se calculan sobre <strong>todas las matrices</strong> (Q, R y matriz rotada). 
+      El mínimo puede ser negativo porque las matrices Q y R pueden contener valores negativos como resultado 
+      de la factorización QR. Esto es <strong>completamente normal</strong> y matemáticamente correcto.
+    </app-info-box>
+    
+    <div *ngIf="result.nodeStats" class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Máximo</div>
+        <div class="value">{{ result.nodeStats.max | number:'1.2-2' }}</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="label">Mínimo</div>
+        <div class="value">{{ result.nodeStats.min | number:'1.2-2' }}</div>
+        <small *ngIf="result.nodeStats.min < 0">
+          (Valor negativo es normal en QR)
+        </small>
+      </div>
+      
+      <div class="stat-card">
+        <div class="label">Promedio</div>
+        <div class="value">{{ result.nodeStats.avg | number:'1.2-2' }}</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="label">Suma Total</div>
+        <div class="value">{{ result.nodeStats.sum | number:'1.2-2' }}</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="label">Es Diagonal</div>
+        <div class="value">{{ result.nodeStats.anyDiagonal ? 'Sí' : 'No' }}</div>
+      </div>
+    </div>
+
+    <div *ngIf="result.error" class="error">
+      ⚠️ Advertencia: {{ result.error }}
+    </div>
+  </div>
+</div>
+

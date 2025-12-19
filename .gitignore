@@ -1,0 +1,135 @@
+# ============================================
+# Archivos de Entorno
+# ============================================
+.env
+.env.local
+.env.*.local
+*.env
+
+# ============================================
+# Node.js
+# ============================================
+node-api/node_modules/
+node-api/npm-debug.log*
+node-api/yarn-debug.log*
+node-api/yarn-error.log*
+node-api/.pnp
+node-api/.pnp.js
+node-api/.npm
+node-api/.yarn/cache
+node-api/.yarn/unplugged
+node-api/.yarn/build-state.yml
+node-api/.yarn/install-state.gz
+node-api/.yarn-integrity
+
+# ============================================
+# Go
+# ============================================
+go-api/*.exe
+go-api/*.exe~
+go-api/*.dll
+go-api/*.so
+go-api/*.dylib
+go-api/main
+go-api/go-api
+go-api/server
+go-api/vendor/
+go-api/*.test
+go-api/*.out
+go-api/.vscode/
+go-api/.idea/
+
+# ============================================
+# Binarios y Archivos Compilados
+# ============================================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.bin
+*.o
+*.a
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+*.log.*
+
+# ============================================
+# Archivos del Sistema
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================
+# IDEs y Editores
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# Docker
+# ============================================
+.dockerignore
+
+# ============================================
+# Archivos Temporales
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.cache
+.cache/
+
+# ============================================
+# Testing y Coverage
+# ============================================
+coverage/
+*.cover
+*.coverprofile
+.nyc_output/
+test-results/
+*.test
+
+# ============================================
+# Build y Dist
+# ============================================
+dist/
+build/
+out/
+bin/
+*.tar.gz
+*.zip
+
+# ============================================
+# Archivos Específicos del Proyecto
+# ============================================
+# Mantener .env.example pero ignorar .env
+!.env.example
+!node-api/.env.example
+!go-api/.env.example
+
+# Mantener documentación
+!*.md
+!README.md
+!TESTING.md
+!POSTMAN_JWT.md
+

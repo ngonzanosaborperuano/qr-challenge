@@ -1,0 +1,10 @@
+# Ignorar archivos innecesarios en el build de Docker
+*.md
+.git
+.gitignore
+*.test
+*.out
+vendor/
+server
+
+

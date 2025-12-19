@@ -1,0 +1,24 @@
+# Dockerfile para desarrollo - API Node.js
+FROM node:20-alpine
+
+# Instalar wget para healthchecks
+RUN apk --no-cache add wget
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar todas las dependencias (incluyendo devDependencies para nodemon)
+RUN npm ci
+
+# El código fuente se montará como volumen en docker-compose.dev.yml
+# No copiamos el código aquí para permitir hot-reload
+
+# Exponer puerto
+EXPOSE 3001
+
+# Comando por defecto (se sobrescribe en docker-compose)
+CMD ["npm", "run", "dev"]
+

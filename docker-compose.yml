@@ -1,0 +1,71 @@
+services:
+  # API Node.js
+  node-api:
+    build:
+      context: ./node-api
+      dockerfile: Dockerfile
+    container_name: qr-challenge-node-api
+    ports:
+      - "${NODE_API_PORT:-3001}:3001"
+    environment:
+      - PORT=${NODE_API_PORT:-3001}
+      - NODE_ENV=${NODE_ENV:-production}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - qr-network
+
+  # API Go
+  go-api:
+    build:
+      context: ./go-api
+      dockerfile: Dockerfile
+    container_name: qr-challenge-go-api
+    ports:
+      - "${GO_API_PORT:-3000}:3000"
+    environment:
+      - PORT=${GO_API_PORT:-3000}
+      - NODE_API_URL=${NODE_API_URL:-http://node-api:3001}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in}
+    depends_on:
+      node-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - qr-network
+
+  # Frontend Angular - Producción
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: qr-challenge-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - go-api
+      - node-api
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - qr-network
+
+networks:
+  qr-network:
+    driver: bridge
+
+

@@ -1,0 +1,23 @@
+# Dockerfile para desarrollo - Frontend Angular
+FROM node:20-alpine
+
+# Instalar herramientas
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm ci
+
+# El código fuente se montará como volumen en docker-compose.dev.yml
+# No copiamos el código aquí para permitir hot-reload
+
+# Exponer puerto
+EXPOSE 4200
+
+# Comando por defecto (se sobrescribe en docker-compose)
+CMD ["npm", "start", "--", "--host", "0.0.0.0"]
+

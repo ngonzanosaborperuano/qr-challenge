@@ -1,0 +1,24 @@
+# Dockerfile para desarrollo - API Go
+FROM golang:1.23-alpine
+
+# Instalar dependencias del sistema y herramientas de desarrollo
+RUN apk add --no-cache git wget
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias primero (mejora cache de Docker)
+COPY go.mod go.sum ./
+
+# Descargar dependencias
+RUN go mod download
+
+# El código fuente se montará como volumen en docker-compose.dev.yml
+# No copiamos el código aquí para permitir hot-reload
+
+# Exponer puerto
+EXPOSE 3000
+
+# Comando por defecto (se sobrescribe en docker-compose)
+CMD ["go", "run", "cmd/server/main.go"]
+
