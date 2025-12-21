@@ -30,10 +30,10 @@ func main() {
 		godotenv.Load()
 	}
 
-	// Obtener URL de Node.js desde variable de entorno o usar default
+	// Obtener URL de Node.js desde variable de entorno (OBLIGATORIO)
 	nodeURL := os.Getenv("NODE_API_URL")
 	if nodeURL == "" {
-		nodeURL = "http://localhost:3001"
+		log.Fatal("NODE_API_URL no está configurado (defínelo en el .env/variables de entorno)")
 	}
 
 	// Crear cliente para Node.js
@@ -58,7 +58,7 @@ func main() {
 	// Middlewares
 	app.Use(recover.New())
 	app.Use(logger.New())
-	
+
 	// CORS para permitir requests desde el frontend
 	// IMPORTANTE: Debe estar ANTES de las rutas para manejar OPTIONS
 	app.Use(cors.New(cors.Config{
@@ -103,7 +103,7 @@ func main() {
 			"nodeApiUrl":    nodeURL,
 			"endpoints": fiber.Map{
 				"health":        "GET /health",
-				"login":          "POST /auth/login",
+				"login":         "POST /auth/login",
 				"processMatrix": "POST /matrix/process (requiere JWT)",
 				"info":          "GET /",
 			},

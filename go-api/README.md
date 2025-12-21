@@ -19,7 +19,7 @@ API RESTful desarrollada con Go (Golang) y Fiber para procesamiento de matrices:
 ### Requisitos
 
 - Go 1.23.0 o superior
-- Variables de entorno configuradas (ver `.env.example`)
+- Variables de entorno configuradas (archivo `.env` local **no versionado** o variables exportadas)
 
 ### Pasos
 
@@ -30,8 +30,7 @@ cd go-api
 go mod download
 
 # Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus valores
+# Crea un archivo `.env` (no versionar) con tus valores
 
 # Ejecutar servidor
 go run cmd/server/main.go
@@ -190,12 +189,12 @@ Crea un archivo `.env` en el directorio `go-api/`:
 ```env
 PORT=3000
 NODE_API_URL=http://localhost:3001
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_SECRET=REPLACE_ME_WITH_A_LONG_RANDOM_STRING
 ```
 
 **Variables disponibles:**
 - `PORT`: Puerto donde escucha el servidor (default: 3000)
-- `NODE_API_URL`: URL de la API de Node.js (default: http://localhost:3001)
+- `NODE_API_URL`: URL de la API de Node.js (**obligatoria**)
 - `JWT_SECRET`: Secreto para firmar tokens JWT
 
 ### Estructura del Proyecto
@@ -238,7 +237,7 @@ go test -v ./...
 go test -cover ./...
 
 # Generar reporte de cobertura
-go test -coverprofile=coverage.out ./...
+go test -coverprofile=coverage.out $(go list ./... | grep -v '/cmd/')
 go tool cover -html=coverage.out
 ```
 
@@ -288,14 +287,6 @@ Cambia el puerto en `.env` o detén el proceso que está usando el puerto.
 ### Error: "connection refused" al conectar con Node.js
 
 Verifica que Node.js API esté corriendo en el puerto configurado en `NODE_API_URL`.
-
----
-
-## 📖 Documentación Adicional
-
-- **FLUJO_COMPLETO.md**: Flujo completo de uso y arquitectura
-- **TESTS.md**: Guía de pruebas
-- **INICIO_RAPIDO.md**: Cómo levantar el proyecto completo
 
 ---
 

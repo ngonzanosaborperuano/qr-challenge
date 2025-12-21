@@ -18,7 +18,7 @@ API RESTful desarrollada con Node.js y Express.js para calcular estadísticas so
 
 - Node.js 20.x o superior
 - npm 9.x o superior
-- Variables de entorno configuradas (ver `.env.example`)
+- Variables de entorno configuradas (archivo `.env` local **no versionado** o variables exportadas)
 
 ### Pasos
 
@@ -29,8 +29,7 @@ cd node-api
 npm install
 
 # Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus valores
+# Crea un archivo `.env` (no versionar) con tus valores
 
 # Ejecutar en modo desarrollo (con nodemon)
 npm run dev
@@ -174,7 +173,7 @@ Crea un archivo `.env` en el directorio `node-api/`:
 ```env
 PORT=3001
 NODE_ENV=development
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_SECRET=REPLACE_ME_WITH_A_LONG_RANDOM_STRING
 ```
 
 **Variables disponibles:**
@@ -279,14 +278,6 @@ Verifica que el archivo `.env` exista y contenga `JWT_SECRET`.
 rm package-lock.json
 npm install
 ```
-
----
-
-## 📖 Documentación Adicional
-
-- **FLUJO_COMPLETO.md**: Flujo completo de uso y arquitectura
-- **TESTS.md**: Guía de pruebas
-- **INICIO_RAPIDO.md**: Cómo levantar el proyecto completo
 
 ---
 

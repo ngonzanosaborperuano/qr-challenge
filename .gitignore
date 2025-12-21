@@ -133,3 +133,5 @@ bin/
 !TESTING.md
 !POSTMAN_JWT.md
 
+.vscode/
+.cursor/rules/

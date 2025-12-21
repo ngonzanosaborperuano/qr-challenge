@@ -10,7 +10,7 @@ services:
     environment:
       - PORT=${NODE_API_PORT:-3001}
       - NODE_ENV=${NODE_ENV:-development}
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
     volumes:
       # Montar código fuente para hot-reload
       - ./node-api/src:/app/src
@@ -38,9 +38,9 @@ services:
       - "${GO_API_PORT:-3000}:3000"
     environment:
       - PORT=${GO_API_PORT:-3000}
-      - NODE_API_URL=${NODE_API_URL:-http://node-api:3001}
+      - NODE_API_URL=${NODE_API_URL:?NODE_API_URL must be set}
       - CGO_ENABLED=${CGO_ENABLED:-0}
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
     volumes:
       # Montar código fuente para hot-reload
       - ./go-api:/app

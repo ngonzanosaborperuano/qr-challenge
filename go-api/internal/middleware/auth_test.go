@@ -15,9 +15,6 @@ func TestAuthenticateToken(t *testing.T) {
 	os.Setenv("JWT_SECRET", "test-secret-key")
 	defer os.Unsetenv("JWT_SECRET")
 
-	// Reinicializar jwtSecret para que use el nuevo valor
-	jwtSecret = []byte(getJWTSecret())
-
 	app := fiber.New()
 
 	// Ruta de prueba protegida

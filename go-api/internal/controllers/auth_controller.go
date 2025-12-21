@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"errors"
 	"os"
 	"time"
 
+	"go-api/internal/middleware"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"go-api/internal/middleware"
 )
 
 // LoginRequest estructura para el request de login
@@ -24,12 +26,12 @@ type LoginResponse struct {
 }
 
 // getJWTSecret obtiene el secreto JWT desde variable de entorno
-func getJWTSecret() []byte {
+func getJWTSecret() ([]byte, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		return []byte("your-secret-key-change-in-production")
+		return nil, errors.New("JWT_SECRET no está configurado en las variables de entorno")
 	}
-	return []byte(secret)
+	return []byte(secret), nil
 }
 
 // Login genera un token JWT
@@ -64,8 +66,16 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	// Generar token
+	secret, err := getJWTSecret()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "Error de configuración del servidor",
+			"message": err.Error(),
+		})
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(getJWTSecret())
+	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Error al generar token",
@@ -80,4 +90,3 @@ func Login(c *fiber.Ctx) error {
 		ExpiresIn: "24h",
 	})
 }
-

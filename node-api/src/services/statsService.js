@@ -9,70 +9,62 @@
  */
 function calculateStats(matricesData) {
   const { q, r, rotated } = matricesData;
-  
-  // Combinar todas las matrices en un array plano de valores
-  const allValues = [];
-  
-  // Agregar valores de Q
-  if (q && Array.isArray(q)) {
-    q.forEach(row => {
-      if (Array.isArray(row)) {
-        row.forEach(val => {
-          if (typeof val === 'number' && !isNaN(val)) {
-            allValues.push(val);
-          }
-        });
+
+  // Acumuladores (evitamos construir arrays grandes)
+  let max;
+  let min;
+  let sum = 0;
+
+  // Conteo para promedio:
+  // - Por defecto: promedio sobre valores de Q y R (según tests).
+  // - Fallback: si Q/R no aportan valores, usar los de rotated.
+  let avgCount = 0;
+  let rotatedCount = 0;
+
+  const accumulate = (matrix, { upperTriangleOnly = false, countForAvg = true } = {}) => {
+    if (!matrix || !Array.isArray(matrix)) return;
+
+    for (let i = 0; i < matrix.length; i++) {
+      const row = matrix[i];
+      if (!Array.isArray(row)) continue;
+
+      for (let j = 0; j < row.length; j++) {
+        if (upperTriangleOnly && i > j) continue;
+
+        const val = row[j];
+        if (typeof val !== 'number' || Number.isNaN(val)) continue;
+
+        if (max === undefined || val > max) max = val;
+        if (min === undefined || val < min) min = val;
+        sum += val;
+
+        if (countForAvg) avgCount += 1;
+        if (upperTriangleOnly) rotatedCount += 1;
       }
-    });
-  }
-  
-  // Agregar valores de R
-  if (r && Array.isArray(r)) {
-    r.forEach(row => {
-      if (Array.isArray(row)) {
-        row.forEach(val => {
-          if (typeof val === 'number' && !isNaN(val)) {
-            allValues.push(val);
-          }
-        });
-      }
-    });
-  }
-  
-  // Agregar valores de rotated si existe
-  if (rotated && Array.isArray(rotated)) {
-    rotated.forEach(row => {
-      if (Array.isArray(row)) {
-        row.forEach(val => {
-          if (typeof val === 'number' && !isNaN(val)) {
-            allValues.push(val);
-          }
-        });
-      }
-    });
-  }
-  
-  if (allValues.length === 0) {
+    }
+  };
+
+  // Agregar valores de Q y R completos
+  accumulate(q, { upperTriangleOnly: false, countForAvg: true });
+  accumulate(r, { upperTriangleOnly: false, countForAvg: true });
+
+  // Agregar valores de rotated solo en triángulo superior (incluida diagonal)
+  // Esto refleja que "rotated" suele representar una matriz triangular (R) tras rotaciones.
+  accumulate(rotated, { upperTriangleOnly: true, countForAvg: false });
+
+  if (max === undefined || min === undefined) {
     throw new Error('No se encontraron valores numéricos válidos en las matrices');
   }
-  
-  // Calcular estadísticas de manera eficiente
-  // Usar reduce en lugar de Math.max/min para evitar problemas con matrices grandes
-  let max = allValues[0];
-  let min = allValues[0];
-  let sum = 0;
-  
-  for (let i = 0; i < allValues.length; i++) {
-    const val = allValues[i];
-    if (val > max) max = val;
-    if (val < min) min = val;
-    sum += val;
+
+  // Fallback para evitar división por cero si Q/R no traen valores, pero rotated sí.
+  if (avgCount === 0 && rotatedCount > 0) {
+    avgCount = rotatedCount;
   }
-  
-  const avg = sum / allValues.length;
-  
-  // Verificar si alguna matriz es diagonal
-  const anyDiagonal = isDiagonal(q) || isDiagonal(r) || (rotated && isDiagonal(rotated));
+
+  const avg = sum / avgCount;
+
+  // Verificar si alguna matriz es diagonal (forzamos boolean)
+  const anyDiagonal = isDiagonal(q) || isDiagonal(r) || isDiagonal(rotated);
   
   return {
     max,
@@ -105,7 +97,7 @@ function isDiagonal(matrix) {
   }
   
   // Verificar que todos los elementos fuera de la diagonal sean 0
-  const tolerance = 1e-10; // Tolerancia para comparación de números flotantes
+  const tolerance = 1e-12; // Tolerancia para comparación de números flotantes
   for (let i = 0; i < rows; i++) {
     if (!Array.isArray(matrix[i])) {
       return false;

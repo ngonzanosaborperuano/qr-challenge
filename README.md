@@ -37,21 +37,17 @@ npm --version   # Debe ser 9.x o superior
 
 ### Paso 1: Configurar Variables de Entorno
 
-Copia el archivo de ejemplo y ajusta los valores si es necesario:
+Configura variables de entorno (recomendado con un archivo `.env` local **no versionado** o exportando variables en tu shell).
 
-```bash
-cp .env.example .env
-```
-
-Edita `.env` con tus preferencias (opcional):
+Crea/edita `.env` en la raíz del repo:
 ```bash
 # Puertos
 GO_API_PORT=3000
 NODE_API_PORT=3001
 FRONTEND_PORT=4200
 
-# JWT Secret (cambiar en producción)
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+# JWT Secret (OBLIGATORIO: no hay default en el código ni en docker-compose)
+JWT_SECRET=REPLACE_ME_WITH_A_LONG_RANDOM_STRING
 
 # Entorno
 NODE_ENV=development
@@ -114,7 +110,7 @@ curl http://localhost:3001/health
 # Respuesta esperada: {"status":"ok","service":"node-api"}
 
 # Verificar Frontend (desarrollo)
-# Abrir navegador en: http://localhost:4200
+Abrir navegador en: http://localhost:4200
 
 # Verificar Frontend (producción)
 # Abrir navegador en: http://localhost:80
@@ -137,28 +133,26 @@ curl http://localhost:3001/health
 
 ```bash
 cd go-api
-cp .env.example .env
 ```
 
-Edita `go-api/.env`:
+Edita `go-api/.env` (no versionar):
 ```env
 PORT=3000
 NODE_API_URL=http://localhost:3001
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_SECRET=REPLACE_ME_WITH_A_LONG_RANDOM_STRING
 ```
 
 #### Node.js API
 
 ```bash
 cd node-api
-cp .env.example .env
 ```
 
-Edita `node-api/.env`:
+Edita `node-api/.env` (no versionar):
 ```env
 PORT=3001
 NODE_ENV=development
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_SECRET=REPLACE_ME_WITH_A_LONG_RANDOM_STRING
 ```
 
 #### Frontend
@@ -395,14 +389,14 @@ Para más detalles sobre el uso de los endpoints, consulta:
 
 ### Docker (Desarrollo)
 ```bash
-cp .env.example .env
+# Asegúrate de tener un `.env` en la raíz con JWT_SECRET (obligatorio)
 docker-compose -f docker-compose.dev.yml up -d --build
 # Abrir: http://localhost:4200
 ```
 
 ### Docker (Producción)
 ```bash
-cp .env.example .env
+# Asegúrate de tener un `.env` en la raíz con JWT_SECRET (obligatorio)
 docker-compose up -d --build
 # Abrir: http://localhost:80
 ```

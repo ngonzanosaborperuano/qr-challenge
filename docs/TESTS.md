@@ -34,7 +34,9 @@ go test ./internal/services/...
 go test -cover ./...
 
 # Ejecutar pruebas con cobertura detallada
-go test -coverprofile=coverage.out ./...
+# Nota: si usas `./...` se incluye `cmd/server` (sin tests) y verás 0% en `main.go`.
+# Para un reporte más útil, excluye `cmd/`:
+go test -coverprofile=coverage.out $(go list ./... | grep -v '/cmd/')
 go tool cover -html=coverage.out
 ```
 

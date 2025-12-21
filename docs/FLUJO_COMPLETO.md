@@ -57,7 +57,7 @@ qr-challenge/
 │
 ├── docker-compose.yml        # Producción
 ├── docker-compose.dev.yml    # Desarrollo (hot-reload)
-└── .env.example             # Variables de entorno ejemplo
+└── .env (local)            # Variables de entorno (no versionar)
 ```
 
 ### Arquitectura de Comunicación

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"os"
 	"strings"
 
@@ -8,20 +9,22 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte(getJWTSecret())
-
 // getJWTSecret obtiene el secreto JWT desde variable de entorno
-func getJWTSecret() string {
+func getJWTSecret() (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		return "your-secret-key-change-in-production"
+		return "", errors.New("JWT_SECRET no está configurado en las variables de entorno")
 	}
-	return secret
+	return secret, nil
 }
 
 // getJWTSecretBytes obtiene el secreto JWT como []byte (lee dinámicamente)
-func getJWTSecretBytes() []byte {
-	return []byte(getJWTSecret())
+func getJWTSecretBytes() ([]byte, error) {
+	secret, err := getJWTSecret()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(secret), nil
 }
 
 // Claims estructura para los claims del JWT
@@ -34,6 +37,14 @@ type Claims struct {
 
 // AuthenticateToken middleware para verificar token JWT
 func AuthenticateToken(c *fiber.Ctx) error {
+	// Validar configuración antes de intentar verificar tokens
+	if _, err := getJWTSecret(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "Error de configuración del servidor",
+			"message": err.Error(),
+		})
+	}
+
 	authHeader := c.Get("Authorization")
 	if authHeader == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -57,7 +68,7 @@ func AuthenticateToken(c *fiber.Ctx) error {
 	// Usar getJWTSecretBytes() para leer dinámicamente (útil en tests)
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return getJWTSecretBytes(), nil
+		return getJWTSecretBytes()
 	})
 
 	if err != nil || !token.Valid {
@@ -72,4 +83,3 @@ func AuthenticateToken(c *fiber.Ctx) error {
 
 	return c.Next()
 }
-
