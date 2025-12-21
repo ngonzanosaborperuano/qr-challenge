@@ -3,9 +3,10 @@ package handlers
 import (
 	"log"
 
-	"github.com/gofiber/fiber/v2"
 	"go-api/internal/models"
 	"go-api/internal/services"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 // MatrixHandler maneja las peticiones relacionadas con matrices
@@ -84,4 +85,3 @@ func (h *MatrixHandler) ProcessMatrix(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(response)
 }
-

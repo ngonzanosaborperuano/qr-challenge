@@ -118,7 +118,7 @@ export class LoginComponent implements DoCheck {
         console.error('Error error:', err.error);
         
         if (err.status === 0 || err.status === undefined) {
-          this.error = 'No se puede conectar con el servidor. Verifica que la API Go esté corriendo en http://localhost:3000';
+          this.error = 'No se puede conectar con el servidor. Verifica que las APIs estén levantadas y que la configuración del frontend sea correcta.';
         } else if (err.status === 401) {
           this.error = err.error?.message || 'Credenciales incorrectas';
         } else if (err.status === 400) {

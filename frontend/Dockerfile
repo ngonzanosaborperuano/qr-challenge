@@ -14,11 +14,28 @@ COPY . .
 # Compilar la aplicación
 RUN npm run build
 
+# Normalizar salida de Angular para Nginx:
+# Angular 17+ suele generar en dist/browser (o dist/<app>/browser).
+# Construimos /app/out con index.html en raíz para que el COPY final siempre reemplace
+# el index.html default de Nginx (evita el "Welcome to nginx!").
+RUN set -eux; \
+  rm -rf /app/out; mkdir -p /app/out; \
+  if [ -d /app/dist/browser ]; then \
+    cp -R /app/dist/browser/. /app/out/; \
+  elif [ -f /app/dist/index.html ]; then \
+    cp -R /app/dist/. /app/out/; \
+  else \
+    idx="$(find /app/dist -maxdepth 6 -type f -name index.html | head -n 1)"; \
+    if [ -z "$idx" ]; then echo "No se encontró index.html en /app/dist"; exit 1; fi; \
+    dir="$(dirname "$idx")"; \
+    cp -R "$dir"/. /app/out/; \
+  fi
+
 # Etapa 2: Producción - Servir con nginx
 FROM nginx:alpine
 
 # Copiar archivos compilados
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/out /usr/share/nginx/html
 
 # Copiar configuración de nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
